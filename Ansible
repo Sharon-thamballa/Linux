@@ -1,0 +1,47 @@
+Ansible is a Configuration Management
+Configuration Management
+-----------------------------------
+This is process of configuring remote servers from one point of control.
+Advantages
+----------------------
+1) Provisioning of servers
+	The applications that should be installed on server can be done very quickly from a single centralized location. 
+	so that client can save time and resources.
+
+2) Idempotent 
+	Configuration management tools are used to bring the server to a particular state, 
+	called as desired state. If a server already in the desired state
+Note: Cofiguration management tools cannot be used for installing OS from the scratch.
+They can be used only for managing the applications on top of the OS.
+COnfigutaion management tools -  Ansible, chef, puppet, salt  etc
+Ansible  -- It is a open source configuration management tool, created using Python.
+
+Main machine in which anisble is installed, is called as controller.
+Remote severs that Ansible configures, are called as managed nodes.
+
+Ansible uses agent less policy for configures remote servers ie Ansible is installed only on 1 machine, 
+and we do not require any client side software to be installed on the remote serers.
+
+Ansible performs configuration management through password less ssh  --(from the controller to the remote servers.)
+
+Establish password less ssh connection between controller and managed nodes.you hav to mention to controller to configure these all particular nodes 
+so for that Write the ip address of nodes in the inventory file which needs to be configured.
+The file in which we mention the nodes Ip addresses called as inventory file.
+
+
+Installing ansible now
+
+Connect to controller.
+
+$ sudo apt-get install software-properties-common
+(  software-properties-common    ,  is a base package which is required to install ansible )
+
+$ sudo apt-add-repository ppa:ansible/ansible
+
+$ sudo apt-get update
+
+$ sudo apt-get install -y ansible
+
+
+
+
