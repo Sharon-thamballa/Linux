@@ -377,3 +377,148 @@ $ ansible-playbook  playbook7.yml    --extra-vars "a=tree b=present c=no"  -b
 The above command will install tree because global scope variables have higher priority
 
 
+Implementing loops
+$ vi playbook11.yml
+
+- name: Install software packages
+  hosts: webserver
+  tasks:
+   - name: Install software
+     apt:
+      name: "{{item}}"
+      state: present
+      update_cache: no
+     with_items:
+      - tree
+      - git
+      - default-jdk
+      - apache2
+...
+$ ansible-playbook  playbook11.yml  -b
+
+
+Requirement:
+Tree needs to be installed
+Git needs to be unintalled
+jdk  needs to be updated
+apache needs to be installed and update cache
+
+So in this case you can use multiple varaibles.There is no restriction that you hav to use only one varaible.
+
+$ cd playbooks
+$ vi playbook12.yml
+
+---
+- name: Install software packages
+  hosts: webserver
+  tasks:
+   - name: Install software
+     apt:
+      name: "{{item.a}}"
+      state: "{{item.b}}"
+      update_cache: "{{item.c}}"
+     with_items:
+      - {a: tree,b: present,c: no}
+      - {a: git,b: absent,c: no}
+      - {a: default-jdk,b: latest,c: no}
+      - {a: apache2,b: present,c: yes}
+...
+save and quit
+
+$ ansible-playbook  playbook12.yml  -b
+
+
+Requirement: To create multiple users and files/directories in user's home directories.
+loops are linked with corresponding modules.
+
+$ vi playbook13.yml
+---
+
+---
+- name: Create users and create files/dir in users home dir
+  hosts: all
+  tasks:
+   - name: Create multiple users
+     user:
+      name: "{{item.a}}"
+      password: "{{item.b}}"
+      home: "{{item.c}}"
+     with_items:
+      - {a: Farhan,b: durgasoft,c: /home/Farhan}
+      - {a: Ravi,b: durgasoft,c: /home/ubuntu/Ravi}
+   - name: creating files and directories in users home dir
+     file:
+      name: "{{item.a}}"
+      state: "{{item.b}}"
+     with_items:
+      - {a: /home/Farhan/file1,b: touch}
+      - {a: /home/ubuntu/Ravi/dir1,b: directory}
+...
+
+
+
+
+save and quit
+
+$ ansible-playbook  playbook13.yml  -b
+
+Handler is a piece of code which is executed, if some other module is executed successfully and it has made some changes.
+
+Handlers are always executed only after all the tasks are executed.
+Handlers are executed in the order that are mentioned in the handler section, and not in the order they are called in the tasks section.
+Even if handler is called multiple times in the tasks section, it will be executed only once.
+
+Requirement:
+
+$ vi playbook14.yml
+
+---
+- name: Confugure apache2 using handlers
+  hosts: all
+  tasks:
+   - name: Install apache2
+     apt:
+      name: apache2
+      state: present
+   - name: Edit index.html file
+     copy:
+      content: "Logiclabs\n"
+      dest: /var/www/html/index.html
+     notify: Restart apache2
+  handlers:
+   - name: Restart apache2
+     service:
+      name: apache2
+      state: restarted
+...
+
+
+$ vi playbook15.yml
+
+
+---
+- name: Error handling
+  hosts: all
+  tasks:
+   - block:
+      - name: Install apache1
+        apt:
+         name: apache1
+         state: present
+     rescue:
+      - name: Install apache2
+        apt:
+         name: apache2
+         state: present
+     always:
+      - name: Check url response
+        uri:
+         url: "{{item}}"
+        with_items:
+         - http://172.31.40.65
+         - http://172.31.34.104
+         - http://172.31.42.171
+         - http://172.31.2.247
+...
+
+$ ansible-playbook  playbook15.yml  -b
