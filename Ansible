@@ -45,3 +45,335 @@ $ sudo apt-get install -y ansible
 
 
 
+2 Ways  ansible can be performed or configured 
+1) adhoc commands
+2) playbooks
+
+adhoc commands
+----------------
+To learn adhoc commands we have to learn these modules
+Important modules in ansible
+1) command - This module is used for executing basic linux commands on managed nodes.
+2) shell -  This module is used to execute commands which involved redirection and piping and to execute shell scripts on managed nodes.
+3) ping  --  This module is used to check if the remote server is pingable or not.
+4) user --  This module is used for user management like create user, setting password, assign home directory  etc
+
+5) copy  --  This module is used to copy the files and folders from controller to managed nodes
+
+
+6) fetch  --  This module is used to copy files and folder from managed nodes to controller
+
+7) file  --  This module is used for creating or deleting files and folders on managed nodes.
+
+8) stat  --  Used to capture detailed information about files and folders present in managed nodes.
+
+9) debug --  Used to display output of any module
+
+10) apt   --  Used for performing package management on managed nodes ie installing softwares / upgrading repositories  etc . It works on ubuntu, debain flavours of linux. 
+
+11) yum  --  similar to apt module. It works on Red hat linux, centos etc
+
+
+12) git  --  used to perform git version controlling on managed nodes
+
+13) replace -- This is used to replace specific text in configuration file with some other text.
+
+
+14) service  -- used for starting / stoping / restarting services on managed nodes.
+
+15) include  --  Used for calling child play books  from parent play book
+
+16) uri    -- useful in checking  if remote url is reachable or not.
+
+17) docker_container  --  used to execute docker  commands related to container management on managed nodes
+
+18) docker_image  --  used to execute commands related to docker images on managed nodes.
+
+19) docker_login  --  used to login to docker hub from managed nodes.
+
+20) setup   --  used to capturing system information related to the managed nodes.
+
+++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+$ ansible all  -i  /etc/ansible/hosts    -m command    -a   'free'   / ansible all -a 'free'
+
+ansible - refers to every ansible command starts with ansible word 
+all - refers to all the machines in ansible 
+-i  - refers to a inventory file
+-a - refers to arguments
+-m - refers to module
+
+
+
+
+
+ansible all -i /etc/ansible/hosts -m command -a 'touch file1'
+
+
+$ ansible all -i /etc/ansible/hosts -m shell -a 'curl  -fsSL  https://get.docker.com  -o get-docker.sh'   
+
+$ ansible all -i /etc/ansible/hosts -m shell -a 'sh get-docker.sh'   
+
+Syntx of adhoc commands
+$ ansible  all/group_name/ipaddress     -i  path_of_inventory_file     -m modulename     -a  'arguments'
+
+o open the default inventory file
+
+$ sudo vim  /etc/ansible/hosts
+
+ansible  all  -m  shell -a 'ls -la > file2'
+
+ $ ansible all  -m shell -a 'curl  -fsSL  https://get.docker.com  -o get-docker.sh'   
+
+$ ansible all -m shell -a 'sh get-docker.sh'   
+
+$ sudo  useradd sharu 
+$ vim /etc/passwd
+$ sudo passwd  sharu  
+
+$ ansible  all -m user  -a  'name=sharu  password=welcome'
+$ ansible  all -m user  -a  'name=kiran  password=welcome'  -b
+
+$ ansible all -m apt  -a 'name=git  state=present' -b
+$ ansible all -m apt  -a 'name=git  state=absent' -b
+
+state=present  is for installation
+state=latest    for upgradation
+state=absent    for uninstallation
+
+
+ansible all -m  apt -a 'name=tomcat9 state=present  update_cache=yes' -b
+ansible all  -m  file -a  'name=/tmp/file5  state=touch' 
+ansible all  -m  file -a  'name=/tmp/dir1  state=directory' 
+ansible all  -m  file -a  'name=/tmp/file5  state=absent' 
+state=touch   is to create files
+state=directory  is to create directory
+state=absent  is for deleting file/directory
+$  ansible all  -m  file -a  'name=file1  state=touch owner=Anu group=Ravi  mode=700'  -b
+
+
+$ ansible all -m  copy  -a 'src=/etc/passwd     dest=/tmp'
+
+$ ansible all  -m fetch  -a 'src=/etc/tomcat9/server.xml     dest=/tmp'  -b
+
+
+ansible all -m  git  -a  'repo=https://github.com/sunildevops77/repo1.git  dest=/tmp/mygit'  -b
+
+$  ansible all   -m service    -a 'name=tomcat9  state=restarted'  -b
+
+state=restarted is for restarting a service
+
+state=stopped  is for stopping a running service
+
+state=started  is for starting a stopped service
+
+$ sudo  vim  server.xml
+$  ansible all  -m replace  -a 'regexp=8080 replace=9090 path=/etc/tomcat9/server.xml'  -b
+$  ansible all   -m service    -a 'name=tomcat9  state=restarted'  -b
+
+
+$ ansible all -m   uri  -a 'url=http://facebook.com'
+$ ansible all -m   uri  -a 'url=http://facebook.com  status=200'
+
+Lets have an example of all modules
+Requirement: I want to install tomcat all manages nodes , then i want to copy  users.xml in all managed nodes, 
+I want to change port number of tomcat  , then i want to restart the service, finally i want to check 
+url is reachable or not.
+
+$  ansible all -m  apt -a 'name=tomcat9 state=present' -b
+$  ansible all -m  copy  -a  'src=tomcat-users.xml  dest=/etc/tomcat9'  -b
+$ ansible all  -m replace  -a 'regexp=8080 replace=9090 path=/etc/tomcat9/server.xml'  -b 
+$  ansible all   -m service    -a 'name=tomcat9  state=restarted'  -b
+$ ansible all -m   uri  -a 'url=http://172.31.11.96:9090'
+
+
+
+Play books
+---------------
+Notes:
+Adhoc commands are capable of working only on one module and one set of arguments.
+When we want to perform complex configuration management activities, 
+adhoc commands will be difficult to manage.
+
+In such scenarios, we use play books.
+Play book is combination of plays.
+Each play is designed to do some activity on the managed nodes.
+These plays are created to work on single host or a group of hosts or all the hosts.
+
+The main advantage of play books  is reusability.
+Play books are created using  yaml files.
+
+
+$ mkdir  playbooks  all playbooks i want to create in a directory called playbooks
+$ cd playbooks
+$ vi playbook1.yml
+INSERT   mode
+
+---
+- name: Install git and clone a remote repository     (name should explain what activity it should perform)
+  hosts: all
+  tasks:
+    - name: Install git
+      apt:
+       name: git
+       state: present
+       update_cache: yes
+    - name: clone remote git repository
+      git:
+        repo: https://github.com/sunilkumark11/git-9am-batch.git
+        dest: /home/ubuntu/newgit  	
+...
+
+
+
+
+To check the syntax:
+$ ansible-playbook  playbook1.yml  --syntax-check
+
+To run the playbook
+$ ansible-playbook  playbook1.yml  -b
+
+$ vi playbook2.yml
+
+---
+- name: Create user and copy passwd file
+  hosts: all
+  tasks:
+          - name: User creation
+            user:
+             name: kiran
+             password: sunilsunil
+             uid: 6779
+             home: /home/kiran
+          - name: Copy password into users home dir
+            copy:
+             src: /etc/passwd
+             dest: /home/kiran
+...
+
+Save and quit
+
+To run 
+$ ansible-playbook  playbook2.yml  -b
+
+
+
+
+$ vi playbook3.yml
+
+---
+- name: Configure  tomcat9
+  hosts: all
+  tasks:
+   - name: Install tomcat9
+     apt:
+      name: tomcat9
+      state: present
+   - name: copy tomcat-users.xml file
+     copy:
+      src:  /home/ubuntu/newfile1
+      dest: /etc/tomcat9
+   - name: change port of tomcat from 8080 to 9090
+     replace:
+      regexp: 8080
+      replace: 9090
+      path: /etc/tomcat9/server.xml
+   - name: restart tomcat9
+     service:
+      name: tomcat9
+      state: restarted
+   - name: check url response of server 1
+     uri:
+      url: http://13.233.186.108:9090
+      status=200
+   - name:   check url response of server 2
+     uri:
+      url: http://13.201.8.86:9090
+      status=200
+...
+
+
+$ ansible-playbook  playbook3.yml  --syntax-check
+
+$ ansible-playbook  playbook3.yml  -b
+
+
+
+$ vim playbook4.yml
+
+---
+- name: configuring apache2
+  hosts: all
+  tasks:
+   - name: Install apache2
+     apt:
+      name: apache2
+      state: present
+   - name: Edit index.html file
+     copy:
+      content: "Welcome to playbooks\n"
+      dest: /var/www/html/index.html
+   - name: Restart apache2
+     service:
+      name: apache2
+      state: restarted
+   - name: check url response of server1
+     uri:
+      url: http://172.31.35.28
+      status: 200
+
+
+
+3 Types of variables
+
+1) Global scope variables   ( highest priority )  - we pass values from command prompt
+2) Host scope variables    
+3) play scope variables   ( least priority )
+
+
+Ex of Global scope variables
+$ vim playbook5.yml
+---
+- name: Install software packages
+  hosts: all
+  tasks:
+   - name: Install/uninstall/update etc
+     apt:
+      name: "{{a}}"
+      state: "{{b}}"
+      update_cache: "{{c}}"
+...
+
+$ ansible-playbook  playbook5.yml  --extra-vars "a=git b=absent c=no"  -b
+$ ansible-playbook  playbook5.yml  --extra-vars "a=tree b=present c=no"  -b
+
+
+
+Playscope variables are definined within the playbook 
+and they can effect only in one single play.
+$ vim playbook7.yml
+
+---
+- name: Using play scope variable
+  hosts: all
+  vars:
+   - a: tomcat9
+   - b: present
+   - c: no
+  tasks:
+   - name: Install tomcat9
+     apt:
+      name: "{{a}}"
+      state: "{{b}}"
+      update_cache: "{{c}}"
+...
+
+$ ansible-playbook  playbook7.yml  -b
+$ ansible-playbook  playbook7.yml    --extra-vars "a=tree b=present c=no"  -b
+The above command will install tree because global scope variables have higher priority
+
+
